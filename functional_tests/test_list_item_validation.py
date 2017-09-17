@@ -84,3 +84,24 @@ class ItemValidationTest(FunctionalTest):
         self.wait_for(lambda: self.assertFalse(
             self.get_error_element().is_displayed()
             ))
+
+    def test_click_inside_input_element_clears_error_messages(self):
+        # Edith starts a list and causes validation error:
+        self.browser.get(self.live_server_url)
+        self.get_item_input_box().send_keys('Make dinner')
+        self.get_item_input_box().send_keys(Keys.ENTER)
+        self.wait_for_row_in_list_table('1: Make dinner')
+        self.get_item_input_box().send_keys('Make dinner')
+        self.get_item_input_box().send_keys(Keys.ENTER)
+        
+        self.wait_for(lambda: self.assertTrue(
+            self.get_error_element().is_displayed()
+            ))
+            
+        # She clicks inside input box
+        self.get_item_input_box().click()
+        
+        # Error message dissapears
+        self.wait_for(lambda: self.assertFalse(
+            self.get_error_element().is_displayed()
+            ))
