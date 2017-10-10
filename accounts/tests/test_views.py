@@ -2,6 +2,7 @@ from django.test import TestCase
 from unittest.mock import patch, call
 import accounts.views
 from accounts.models import Token
+from superlists.settings import EMAIL_HOST_USER
 
 
 class SendLoginEmailViewTest(TestCase):
@@ -21,7 +22,7 @@ class SendLoginEmailViewTest(TestCase):
         self.assertEqual(mock_send_mail.called, True)
         (subject, body, from_email, to_list), kwargs = mock_send_mail.call_args
         self.assertEqual(subject, 'Your login link for Superlists')
-        self.assertEqual(from_email, 'noreply@superlists')
+        self.assertEqual(from_email, EMAIL_HOST_USER)
         self.assertEqual(to_list, ['edith@example.com'])
 
     def test_adds_success_message(self):
