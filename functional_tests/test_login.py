@@ -21,11 +21,11 @@ class LoginTest(FunctionalTest):
             
         email_id = None
         start = time.time()
-        inbox = poplib.POP3_SSL('mail.runbox.com')
-        try:
-            inbox.user(test_email)
-            inbox.pass_(os.environ['RUNBOX_PASSWORD'])
-            while time.time() - start < 60:
+        while time.time() - start < 60:
+            try:
+                inbox = poplib.POP3_SSL('mail.runbox.com')
+                inbox.user(test_email)
+                inbox.pass_(os.environ['RUNBOX_PASSWORD'])
                 # get 10 newest messages
                 count, _ = inbox.stat()
                 for i in reversed(range(max(1, count - 10), count + 1)):
@@ -36,11 +36,11 @@ class LoginTest(FunctionalTest):
                         email_id = i
                         body = '\n'.join(lines)
                         return body
-                time.sleep(5)
-        finally:
-            if email_id:
-                inbox.dele(email_id)
-            inbox.quit()
+            finally:
+                if email_id:
+                    inbox.dele(email_id)
+                inbox.quit()
+            time.sleep(5)
 
     def test_can_get_email_link_to_log_in(self):
         # Edith goes to the awesome superlists site
