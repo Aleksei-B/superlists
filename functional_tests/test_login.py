@@ -8,6 +8,7 @@ from .base import FunctionalTest
 
 
 SUBJECT = 'Your login link for Superlists'
+STAGING_TEST_EMAIL = ''
 
 
 class LoginTest(FunctionalTest):
@@ -25,7 +26,7 @@ class LoginTest(FunctionalTest):
             try:
                 inbox = poplib.POP3_SSL('mail.runbox.com')
                 inbox.user(test_email)
-                inbox.pass_(os.environ['RUNBOX_PASSWORD'])
+                inbox.pass_(os.environ['TEST_EMAIL_PASSWORD'])
                 # get 10 newest messages
                 count, _ = inbox.stat()
                 for i in reversed(range(max(1, count - 10), count + 1)):
@@ -47,7 +48,7 @@ class LoginTest(FunctionalTest):
         # and notices a "Log in" section in the navbar for the first time
         # It's telling her to enter her email address, so she does
         if self.staging_server:
-            test_email = 'edith123@runbox.com'
+            test_email = STAGING_TEST_EMAIL
         else:
             test_email = 'edith@example.com'
         self.browser.get(self.live_server_url)
