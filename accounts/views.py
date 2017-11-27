@@ -15,8 +15,7 @@ def send_login_email(request):
     send_mail(
         'Your login link for Superlists',
         message_body,
-        #'noreply@superlists',
-        'superlists@mailbox.org',
+        'noreply@superlists',
         [email]
     )
     messages.success(

@@ -147,8 +147,8 @@ LOGGING = {
 }
 
 
-EMAIL_HOST = 'smtp.mailbox.org'
-EMAIL_HOST_USER = 'superlists@mailbox.org'
+EMAIL_HOST = ''
+EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

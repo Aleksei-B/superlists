@@ -31,13 +31,11 @@ def wait(fn):
 class FunctionalTest(StaticLiveServerTestCase):
 
     def setUp(self):
+        self.browser = webdriver.Firefox()
         self.staging_server = os.environ.get('STAGING_SERVER')
         if self.staging_server:
-            if 'staging' not in self.staging_server:
-                self.fail('Safeguard: no "staging" in staging server name')
             self.live_server_url = 'http://' + self.staging_server
             reset_database(self.staging_server)
-        self.browser = webdriver.Firefox()
 
     def tearDown(self):
         if self._test_has_failed():
