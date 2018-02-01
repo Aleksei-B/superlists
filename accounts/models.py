@@ -12,8 +12,12 @@ class User(models.Model):
     REQUIRED_FIELDS = []
     is_anonymous = False
     is_authenticated = True
-    
-    
+
+    @property
+    def is_active(self):
+        return True
+
+
 class Token(models.Model):
     email = models.EmailField()
     uid = models.CharField(default=uuid.uuid4, max_length=40)
