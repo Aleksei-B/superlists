@@ -149,8 +149,11 @@ class NewListViewUnitTest(unittest.TestCase):
         mock_render.assert_called_once_with(
             self.request, 'home.html', {'form': mock_form}
         )
-        
-    def test_does_not_save_if_form_invalid(self, mockNewListForm):
+
+    @patch('lists.views.render')
+    def test_does_not_save_if_form_invalid(
+        self, mock_render,  mockNewListForm
+    ):
         mock_form = mockNewListForm.return_value
         mock_form.is_valid.return_value = False
         new_list(self.request)
@@ -194,7 +197,9 @@ class MyListsTest(TestCase):
 class ShareListTest(TestCase):
 
     def test_post_redirects_to_lists_page(self):
-        list_ = List.objects.create()
+        owner = User.objects.create(email='owner@example.com')
+        user = User.objects.create(email='fred@example.com')
+        list_ = List.objects.create(owner=owner)
         response = self.client.post(
             f'/lists/{list_.id}/share',
             data={'sharee': 'fred@example.com'}
@@ -202,8 +207,9 @@ class ShareListTest(TestCase):
         self.assertRedirects(response, f'/lists/{list_.id}/')
         
     def test_email_user_added_to_shared_with(self):
+        owner = User.objects.create(email='john@example.com')
         user = User.objects.create(email='fred@example.com')
-        list_ = List.objects.create()
+        list_ = List.objects.create(owner=owner)
         self.client.post(
             f'/lists/{list_.id}/share',
             data={'sharee': 'fred@example.com'}

@@ -91,7 +91,8 @@ class ListModelTest(TestCase):
         self.assertEqual(list_.name, 'first item')
         
     def test_shared_with_dot_add_saves_users(self):
+        owner = User.objects.create(email='john@example.com')
         user = User.objects.create(email='fred@example.com')
-        list_ = List.objects.create()
+        list_ = List.objects.create(owner=owner)
         list_.shared_with.add('fred@example.com')
         self.assertIn(user, list_.shared_with.all())

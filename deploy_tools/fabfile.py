@@ -63,3 +63,10 @@ def _update_database(source_folder):
         f'cd {source_folder}'
         ' && ../virtualenv/bin/python manage.py migrate --noinput'
     )
+    
+    
+def _django_notifications_migration(source_folder):
+    run(
+        f'cd {source_folder}'
+        ' && ../virtualenv/bin/python manage.py migrate notifications --noinput'
+    )

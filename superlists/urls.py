@@ -19,6 +19,7 @@ from lists import urls as list_urls
 #from lists import api_urls
 from lists.api import router
 from accounts import urls as accounts_urls
+import notifications.urls
 
 
 urlpatterns = [
@@ -27,4 +28,5 @@ urlpatterns = [
     url(r'^accounts/', include(accounts_urls)),
     #url(r'^api/', include(api_urls)),
     url(r'^api/', include(router.urls)),
+    url(r'^inbox/notifications/', include(notifications.urls, namespace='notifications')),
 ]

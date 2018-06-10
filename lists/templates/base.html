@@ -11,14 +11,51 @@
   </head>
   
   <body>
+
+    <div class="modal fade" id="id_notify_modal" tabindex="-1" role="dialog" aria-labelledby="id_notify_modal_label">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="id_notify_modal_label">Notifications</h4>
+          </div>
+          <div class="modal-body">
+            {% if user.notifications.unread %}
+              <ul id="id_notify_list">
+                {% for notice in user.notifications.unread %}
+                  <li>
+                    <div class="alert alert-info">
+                      <a class="pull-right" href="{% url 'notifications:mark_as_read' notice.slug %}">
+                        mark as read
+                      </a>
+                      <h4>{{ notice.actor }} {{ notice.verb }} with you:<br>{{ notice.action_object }}</h4>
+                      <p>{{ notice.timesince }} ago</p>
+                    </div>
+                  </li>
+                {% endfor %}
+                <li><a href="{% url 'notifications:mark_all_as_read' %}">mark all as read</a></li>
+              </ul>
+            {% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="container">
-	    
       <nav class="navbar navbar-default" role="navigation">
         <div class="container-fluid">
           <a class="navbar-brand" href="/">Superlists</a>
           {% if user.email %}
             <ul class="nav navbar-nav navbar-left">
               <li><a href="{% url 'my_lists' user.email %}">My lists</a></li>
+              <li>
+                <button type="button" class="btn btn-default navbar-btn" id="id_notify_button"
+                        data-toggle="modal" data-target="#id_notify_modal">
+                  Notifications <span class="badge">{% load notifications_tags %}{% notifications_unread %}</span>
+                </button>
+              </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
               <li class="navbar-text">Logged in as {{ user.email }}</li>
@@ -84,6 +121,7 @@
 	  </div>
 	  <script src="/static/jquery-3.2.1.min.js"></script>
 	  <script src="/static/list.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
 
     {% block scripts %}
 	    <script>

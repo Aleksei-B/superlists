@@ -19,6 +19,9 @@ class List(models.Model):
     @property
     def name(self):
         return self.item_set.first().text
+        
+    def __str__(self):
+        return self.name
     
 
 class Item(models.Model):

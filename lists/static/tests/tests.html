@@ -20,6 +20,11 @@
     </form>
     <table id="id_list_table">
     </table>
+    <ul id="id_notify_list">
+      <li><a class="pull-right" href="/mark/as/read/url1/">mark as read</a></li>
+      <li><a class="pull-right" href="/mark/as/read/url2/">mark as read</a></li>
+      <li><a href="/mark/all/url/">mark all as read</a></li>
+    </ul>
   </div>
   
   <script src="../jquery-3.2.1.min.js"></script>
@@ -197,7 +202,7 @@ QUnit.test("should hide errors on post success", function (assert) {
 });
 
 QUnit.test("should display generic error if no error json", function (assert) {
-  var url = '/listitems api/';
+  var url = '/listitemsapi/';
   window.Superlists.initialize(url);
   server.respondWith('POST', url, [
     502,
@@ -215,6 +220,72 @@ QUnit.test("should display generic error if no error json", function (assert) {
     $('.has-error .help-block').text(),
     'Error talking to server. Please try again.'
   );
+});
+
+QUnit.test("should call markAsRead when 'mark as read' link clicked", function (assert) {
+  sandbox.spy(window.Superlists, 'markAsRead');
+
+  window.Superlists.initialize();
+  $('#id_notify_list a:first').click();
+
+  assert.ok(window.Superlists.markAsRead.calledOnce);
+});
+
+QUnit.test("should call markAsRead when 'mark all as read' link clicked", function (assert) {
+  sandbox.spy(window.Superlists, 'markAsRead');
+
+  window.Superlists.initialize();
+  $('#id_notify_list a:last').click();
+
+  assert.ok(window.Superlists.markAsRead.calledOnce);
+});
+
+QUnit.test("markAsRead should prevent default event", function (assert) {
+  var event = {preventDefault: sandbox.spy()};
+
+  window.Superlists.markAsRead(event);
+  
+  assert.ok(event.preventDefault.called);
+});
+
+QUnit.test("markAsRead should do ajax post", function (assert) {
+  var element = $('#id_notify_list a:last');
+  var event = {
+    preventDefault: function() { return; },
+    currentTarget: element,
+  };
+  
+  window.Superlists.markAsRead(event);
+
+  assert.equal(server.requests.length, 1);
+  var request = server.requests[0];
+  assert.equal(request.url, element.attr('href'));
+  assert.equal(request.method, "POST");
+  var csrf = $('#id_item_form input[name="csrfmiddlewaretoken"]').val();
+  assert.equal(request.requestBody, 'csrfmiddlewaretoken=' + csrf);
+});
+
+QUnit.test("markAsRead should replace clicked 'mark as read' with 'already read'", function (assert) {
+  window.Superlists.initialize();
+  $('#id_notify_list .pull-right:first').click();
+  
+  var element1 = $('#id_notify_list .pull-right:first');
+  assert.equal(element1.prop('tagName'), 'P');
+  assert.equal(element1.text(), 'already read');
+  var element2 = $('#id_notify_list .pull-right:last');
+  assert.equal(element2.prop('tagName'), 'A');
+  assert.equal(element2.text(), 'mark as read');
+});
+
+QUnit.test("markAsRead should reaplace all 'mark as read' with 'already read' if 'mark all as read' clicked", function (assert) {
+  window.Superlists.initialize();
+  $('#id_notify_list a:last').click();
+
+  var elements = $('#id_notify_list .pull-right')
+  elements.each(function() {
+    assert.equal($(this).prop('tagName'), 'P');
+    assert.equal($(this).text(), 'already read');
+  });
 });
 
   </script>
