@@ -11,26 +11,31 @@ Provisioning a new site
 eg, on Ubuntu:
 
     sudo add-apt-repository ppa:deadsnakes/ppa
-    sudo apt-get install nginx git python3.6 python3.6-venv
+	sudo apt update
+    sudo apt install nginx git python36 python3.6-venv
     
 ## Nginx Virtual Host config
 
 * see nginx.template.conf
-* replace SITENAME with, e.g., staging.my-domain.com
+* replace DOMAIN with, e.g., staging.my-domain.com
 
 # Systemd service
 
 * see gunicorn-systemd.template.service
-* replace SITENAME with, e.g., staging.my-domain.com
-* replace SEKRIT with email password
+* replace DOMAIN with, e.g., staging.my-domain.com
 
 ## Folder structure:
 Assume we have a user account at /home/username
 
 /home/username
 +-- sites
-    +-- SITENAME
-         +-- database
-         +-- source
+    +-- DOMAIN1
+	     +-- .env
+         +-- db.sqlite3
+		 +-- manage.py etc
          +-- static
          +-- virtualenv
+    +-- DOMAIN2
+	     +-- .env
+		 +-- db.sqlite3
+		 +-- etc

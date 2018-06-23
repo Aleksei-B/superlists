@@ -1,15 +1,15 @@
 [Unit]
-Description=Gunicorn server for SITENAME
+Description=Gunicorn server for DOMAIN
 
 [Service]
 Restart=on-failure
 User=mike
-WorkingDirectory=/home/mike/sites/SITENAME/source
-Environment=EMAIL_PASSWORD=SEKRIT
-ExecStart=/home/mike/sites/SITENAME/virtualenv/bin/gunicorn \
-    --bind unix:/tmp/SITENAME.socket \
-	--access-logfile ../access.log \
-	--error-logfile ../error.log \
+WorkingDirectory=/home/mike/sites/DOMAIN
+EnvironmentFile=/home/mike/sites/DOMAIN/.env
+ExecStart=/home/mike/sites/DOMAIN/virtualenv/bin/gunicorn \
+    --bind unix:/tmp/DOMAIN.socket \
+	--access-logfile ./access.log \
+	--error-logfile ./error.log \
     superlists.wsgi:application
     
 [Install]
