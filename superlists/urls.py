@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import include, url
+from django.views.defaults import server_error
 from lists import views as list_views
 from lists import urls as list_urls
 #from lists import api_urls
@@ -29,4 +30,5 @@ urlpatterns = [
     #url(r'^api/', include(api_urls)),
     url(r'^api/', include(router.urls)),
     url(r'^inbox/notifications/', include(notifications.urls, namespace='notifications')),
+    url(r'^test_500_error/$', server_error),
 ]
