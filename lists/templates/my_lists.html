@@ -9,18 +9,20 @@
     <div class="col-md-6 col-md-offset-3">
       {% if owner.list_set.all %}
         <h2>Your lists:</h2>
-        <ul>
+        <ul id="id_your_lists">
           {% for list in owner.list_set.all %}
             <li><a href="{{ list.get_absolute_url }}">{{ list.name }}</a></li>
           {% endfor %}
         </ul>
       {% endif %}
-      <h2>Lists shared with you:</h2>
-      <ul>
-        {% for list in owner.shared_lists.all %}
-          <li><a href="{{ list.get_absolute_url }}">{{ list.name }}</a></li>
-        {% endfor %}
-      </ul>
+      {% if owner.shared_lists.all %}
+        <h2>Lists shared with you:</h2>
+        <ul>
+          {% for list in owner.shared_lists.all %}
+            <li><a href="{{ list.get_absolute_url }}">{{ list.name }}</a></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
   </div>
 {% endblock %}
