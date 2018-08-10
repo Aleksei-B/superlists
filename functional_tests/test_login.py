@@ -3,8 +3,11 @@ import poplib
 import re
 import time
 from django.core import mail
+from django.contrib.auth import get_user_model
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
+from lists.models import List
+User = get_user_model()
 
 
 SUBJECT = 'Your login link for Superlists'
@@ -82,3 +85,39 @@ class LoginTest(FunctionalTest):
         
         # She is logged out
         self.wait_to_be_logged_out(email=test_email)
+        
+    def test_registered_users_lists_are_private(self):
+        # Edith is a site user with a list
+        owner = User.objects.create_user('edith@example.com')
+        list_ = List.objects.create(owner=owner)
+        list_url = self.live_server_url + list_.get_absolute_url()
+        
+        # George is a site user too, he tries to see his list but makes two mistakes
+        # He forgets to log-in and inputs wrong(Edith's) list url
+        self.browser.get(list_url)
+        
+        # He redirected to the main page and message appears telling him
+        # that he must log-in to see this list
+        self.wait_for(lambda: self.assertEqual(
+            self.browser.current_url,
+            self.live_server_url
+        ))
+        self.assertIn(
+            'You must log-in to see this list',
+            self.browser.find_element_by_tag_name('body').text
+        )
+        
+        # George logs-in and tries again
+        self.create_pre_authenticated_session('george@example.com')
+        self.browser.get(list_url)
+        
+        # He redirected again with another message:
+        # only list owner and users owner shared this list with can see it
+        self.wait_for(lambda: self.assertEqual(
+            self.browser.current_url,
+            sekf.live_server_url
+        ))
+        self.assertIn(
+            'Only list owner and users owner shared this list with can see this list',
+            self.browser.find_element_by_tag_name('body').text
+        )

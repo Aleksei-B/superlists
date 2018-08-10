@@ -34,7 +34,7 @@
           {% csrf_token %}
         </form>
       {% else %}
-        <h3>List's owner</h3>
+        <h3>List's owner:</h3>
           <p id="id_list_owner">{{ list.owner.email }}</p>
       {% endif %}
       </div>
