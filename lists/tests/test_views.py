@@ -10,7 +10,7 @@ from lists.forms import (
     ExistingListItemForm, ItemForm,
 )
 from lists.models import Item, List
-from lists.views import new_list
+from lists.views import new_list, NOT_LOGGED_ERROR, NOT_OWNER_OR_SHAREE_ERROR
 
 
 class HomePageTest(TestCase):
@@ -104,7 +104,81 @@ class ListViewTest(TestCase):
         self.assertContains(response, expected_error)
         self.assertTemplateUsed(response, 'list.html')
         self.assertEqual(Item.objects.all().count(), 1)
-  
+        
+    def test_not_owner_or_not_sharee_cant_access_list_anonymous_redirects_to_home_page(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        response = self.client.get(f'/lists/{list_.id}/')
+        self.assertRedirects(response, '/')
+        
+    def test_not_owner_or_not_sharee_cant_access_list_registered_redirects_to_home_page(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        user = User.objects.create_user('user@example.com')
+        self.client.force_login(user)
+        response = self.client.get(f'/lists/{list_.id}/')
+        self.assertRedirects(response, '/')
+        
+    def test_list_sharee_CAN_access_list(self):
+        owner = User.objects.create_user('owner@example.com')
+        sharee = User.objects.create_user('sharee@example.com')
+        list_ = List.objects.create(owner=owner)
+        Item.objects.create(text='text', list=list_)
+        list_.shared_with.add(sharee)
+        
+        self.client.force_login(sharee)
+        response = self.client.get(f'/lists/{list_.id}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'list.html')
+        
+    def test_not_owner_or_not_sharee_cant_access_list_anonymous_nothing_saved_to_db(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        self.client.post(f'/lists/{list_.id}/', data={'text': 'A new item'})
+        self.assertEqual(Item.objects.count(), 0)
+        
+    def test_not_owner_or_not_sharee_cant_access_list_registered_nothing_saved_to_db(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        user = User.objects.create_user('user@example.com')
+        self.client.force_login(user)
+        self.client.post(f'/lists/{list_.id}/', data={'text': 'A new item'})
+        self.assertEqual(Item.objects.count(), 0)
+        
+    def test_not_owner_or_not_sharee_cant_access_list_anonymous_get_error_message(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        response = self.client.get(f'/lists/{list_.id}/', follow=True)
+        
+        self.assertEqual(len(response.context['messages']), 1)
+        message = list(response.context['messages'])[0]
+        self.assertEqual(
+            message.message,
+            NOT_LOGGED_ERROR
+        )
+        self.assertEqual(message.tags, "error")
+        
+    def test_not_owner_or_not_sharee_cant_access_list_registered_get_error_message(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        user = User.objects.create_user('user@example.com')
+        self.client.force_login(user)
+        response = self.client.get(f'/lists/{list_.id}/', follow=True)
+        
+        self.assertEqual(len(response.context['messages']), 1)
+        message = list(response.context['messages'])[0]
+        self.assertEqual(
+            message.message,
+            NOT_OWNER_OR_SHAREE_ERROR
+        )
+        self.assertEqual(message.tags, "error")
+    
   
 @patch('lists.views.NewListForm')
 class NewListViewUnitTest(unittest.TestCase):
@@ -200,6 +274,7 @@ class ShareListTest(TestCase):
         owner = User.objects.create(email='owner@example.com')
         user = User.objects.create(email='fred@example.com')
         list_ = List.objects.create(owner=owner)
+        self.client.force_login(owner)
         response = self.client.post(
             f'/lists/{list_.id}/share',
             data={'sharee': 'fred@example.com'}

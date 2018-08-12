@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
 from lists.models import List
+from lists.views import NOT_LOGGED_ERROR, NOT_OWNER_OR_SHAREE_ERROR
 User = get_user_model()
 
 
@@ -100,10 +101,10 @@ class LoginTest(FunctionalTest):
         # that he must log-in to see this list
         self.wait_for(lambda: self.assertEqual(
             self.browser.current_url,
-            self.live_server_url
+            self.live_server_url + '/'
         ))
         self.assertIn(
-            'You must log-in to see this list',
+            NOT_LOGGED_ERROR,
             self.browser.find_element_by_tag_name('body').text
         )
         
@@ -115,9 +116,9 @@ class LoginTest(FunctionalTest):
         # only list owner and users owner shared this list with can see it
         self.wait_for(lambda: self.assertEqual(
             self.browser.current_url,
-            sekf.live_server_url
+            self.live_server_url + '/'
         ))
         self.assertIn(
-            'Only list owner and users owner shared this list with can see this list',
+            NOT_OWNER_OR_SHAREE_ERROR,
             self.browser.find_element_by_tag_name('body').text
         )
