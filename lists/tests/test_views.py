@@ -10,7 +10,10 @@ from lists.forms import (
     ExistingListItemForm, ItemForm,
 )
 from lists.models import Item, List
-from lists.views import new_list, NOT_LOGGED_ERROR, NOT_OWNER_OR_SHAREE_ERROR
+from lists.views import (
+    new_list, NOT_LOGGED_IN_ERROR, NOT_OWNER_OR_SHAREE_ERROR,
+    MY_LISTS_NOT_OWNER_ERROR,
+)
 
 
 class HomePageTest(TestCase):
@@ -105,20 +108,36 @@ class ListViewTest(TestCase):
         self.assertTemplateUsed(response, 'list.html')
         self.assertEqual(Item.objects.all().count(), 1)
         
-    def test_not_owner_or_not_sharee_cant_access_list_anonymous_redirects_to_home_page(self):
+    def test_not_owner_or_not_sharee_cant_access_list_GET_anonymous_redirects_to_home_page(self):
         owner = User.objects.create_user('owner@example.com')
         list_ = List.objects.create(owner=owner)
         
         response = self.client.get(f'/lists/{list_.id}/')
         self.assertRedirects(response, '/')
         
-    def test_not_owner_or_not_sharee_cant_access_list_registered_redirects_to_home_page(self):
+    def test_not_owner_or_not_sharee_cant_access_list_GET_logged_in_redirects_to_home_page(self):
         owner = User.objects.create_user('owner@example.com')
         list_ = List.objects.create(owner=owner)
         
         user = User.objects.create_user('user@example.com')
         self.client.force_login(user)
         response = self.client.get(f'/lists/{list_.id}/')
+        self.assertRedirects(response, '/')
+        
+    def test_not_owner_or_not_sharee_cant_access_list_POST_anonymous_redirects_to_home_page(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        response = self.client.post(f'/lists/{list_.id}/', data={'text': 'A new item'})
+        self.assertRedirects(response, '/')
+        
+    def test_not_owner_or_not_sharee_cant_access_list_POST_logged_in_redirects_to_home_page(self):
+        owner = User.objects.create_user('owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        user = User.objects.create_user('user@example.com')
+        self.client.force_login(user)
+        response = self.client.post(f'/lists/{list_.id}/', data={'text': 'A new item'})
         self.assertRedirects(response, '/')
         
     def test_list_sharee_CAN_access_list(self):
@@ -140,7 +159,7 @@ class ListViewTest(TestCase):
         self.client.post(f'/lists/{list_.id}/', data={'text': 'A new item'})
         self.assertEqual(Item.objects.count(), 0)
         
-    def test_not_owner_or_not_sharee_cant_access_list_registered_nothing_saved_to_db(self):
+    def test_not_owner_or_not_sharee_cant_access_list_logged_in_nothing_saved_to_db(self):
         owner = User.objects.create_user('owner@example.com')
         list_ = List.objects.create(owner=owner)
         
@@ -159,11 +178,11 @@ class ListViewTest(TestCase):
         message = list(response.context['messages'])[0]
         self.assertEqual(
             message.message,
-            NOT_LOGGED_ERROR
+            NOT_LOGGED_IN_ERROR
         )
         self.assertEqual(message.tags, "error")
         
-    def test_not_owner_or_not_sharee_cant_access_list_registered_get_error_message(self):
+    def test_not_owner_or_not_sharee_cant_access_list_logged_in_get_error_message(self):
         owner = User.objects.create_user('owner@example.com')
         list_ = List.objects.create(owner=owner)
         
@@ -257,15 +276,55 @@ class NewListViewIntegratedTest(TestCase):
 class MyListsTest(TestCase):
 
     def test_my_lists_url_renders_my_lists_template(self):
-        User.objects.create(email='a@b.com')
+        user = User.objects.create(email='a@b.com')
+        self.client.force_login(user)
         response = self.client.get('/lists/users/a@b.com/')
         self.assertTemplateUsed(response, 'my_lists.html')
         
     def test_passes_correct_owner_to_template(self):
         User.objects.create(email="wrong@owner.com")
         correct_user = User.objects.create(email="a@b.com")
+        self.client.force_login(correct_user)
         response = self.client.get('/lists/users/a@b.com/')
         self.assertEqual(response.context['owner'], correct_user)
+        
+    def test_if_user_not_owner_redirects_to_home_page_anonymous_user(self):
+        User.objects.create_user('owner@asd.com')
+        response = self.client.get('/lists/users/owner@asd.com/')
+        self.assertRedirects(response, '/')
+        
+    def test_if_user_not_owner_redirects_to_home_page_registered_user(self):
+        User.objects.create_user('owner@asd.com')
+        user = User.objects.create_user('user@asd.com')
+        self.client.force_login(user)
+        response = self.client.get('/lists/users/owner@asd.com/')
+        self.assertRedirects(response, '/')
+        
+    def test_if_user_not_owner_adds_error_message_anonymous_user(self):
+        User.objects.create_user('owner@asd.com')
+        response = self.client.get('/lists/users/owner@asd.com/', follow=True)
+        
+        self.assertEqual(len(response.context['messages']), 1)
+        message = list(response.context['messages'])[0]
+        self.assertEqual(
+            message.message,
+            NOT_LOGGED_IN_ERROR
+        )
+        self.assertEqual(message.tags, "error")
+        
+    def test_if_user_not_owner_adds_error_message_registered_user(self):
+        User.objects.create_user('owner@asd.com')
+        user = User.objects.create_user('user@asd.com')
+        self.client.force_login(user)
+        response = self.client.get('/lists/users/owner@asd.com/', follow=True)
+        
+        self.assertEqual(len(response.context['messages']), 1)
+        message = list(response.context['messages'])[0]
+        self.assertEqual(
+            message.message,
+            MY_LISTS_NOT_OWNER_ERROR
+        )
+        self.assertEqual(message.tags, "error")
         
 
 class ShareListTest(TestCase):

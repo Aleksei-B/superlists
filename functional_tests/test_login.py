@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
 from lists.models import List
-from lists.views import NOT_LOGGED_ERROR, NOT_OWNER_OR_SHAREE_ERROR
+from lists.views import NOT_LOGGED_IN_ERROR, NOT_OWNER_OR_SHAREE_ERROR
 User = get_user_model()
 
 
@@ -104,7 +104,7 @@ class LoginTest(FunctionalTest):
             self.live_server_url + '/'
         ))
         self.assertIn(
-            NOT_LOGGED_ERROR,
+            NOT_LOGGED_IN_ERROR,
             self.browser.find_element_by_tag_name('body').text
         )
         

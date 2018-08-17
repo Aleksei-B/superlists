@@ -7,8 +7,9 @@ from lists.forms import ExistingListItemForm, ItemForm, NewListForm
 from lists.models import Item, List
 
 
-NOT_LOGGED_ERROR = 'You must log-in to see this list.'
+NOT_LOGGED_IN_ERROR = 'You must log-in to see this page.'
 NOT_OWNER_OR_SHAREE_ERROR = 'Only list owner and users owner shared this list with can see it.'
+MY_LISTS_NOT_OWNER_ERROR = 'Users can only access their own my lists pages'
 
 
 def home_page(request):
@@ -21,7 +22,7 @@ def view_list(request, list_id):
         if request.user.is_authenticated:
             messages.error(request, NOT_OWNER_OR_SHAREE_ERROR)
         else:
-            messages.error(request, NOT_LOGGED_ERROR)
+            messages.error(request, NOT_LOGGED_IN_ERROR)
         return redirect('/')
     form = ExistingListItemForm(for_list=list_)
     if request.method == 'POST':
@@ -42,6 +43,12 @@ def new_list(request):
         
 def my_lists(request, email):
     owner = User.objects.get(email=email)
+    if request.user != owner:
+        if request.user.is_authenticated:
+            messages.error(request, MY_LISTS_NOT_OWNER_ERROR)
+        else:
+            messages.error(request, NOT_LOGGED_IN_ERROR)
+        return redirect('/')
     return render(request, 'my_lists.html', {'owner': owner})
 
     
