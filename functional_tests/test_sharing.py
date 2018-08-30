@@ -59,3 +59,36 @@ class SharingTest(FunctionalTest):
         self.browser = edith_browser
         self.browser.refresh()
         list_page.wait_for_row_in_list_table('Hi Edith!', 2)
+        
+    def test_only_owners_can_share_lists(self):
+        # Edith is a logged-in user
+        self.create_pre_authenticated_session('edith@example.com')
+        edith_browser = self.browser
+        self.addCleanup(lambda: quit_if_possible(edith_browser))
+        
+        # Mary is Edith's friends and a logged-in user too
+        mary_browser = webdriver.Firefox()
+        self.addCleanup(lambda: quit_if_possible(mary_browser))
+        self.browser = mary_browser
+        self.create_pre_authenticated_session('mary@example.com')
+        
+        # Edith goes to the home page, starts a list and shares it with Mary
+        self.browser = edith_browser
+        self.browser.get(self.live_server_url)
+        list_page = ListPage(self).add_list_item('Go party')
+        list_url = self.browser.current_url
+        list_page.share_list_with('mary@example.com')
+        
+        # Mary sees a list
+        self.browser = mary_browser
+        self.browser.get(list_url)
+        
+        # And wants to share it with her friend Alice, but in place of a share list form
+        # there is a list owner text
+        self.assertEqual(
+            self.browser.find_elements_by_name('sharee'),
+            []
+        )
+        self.browser.find_element_by_id('id_list_owner')
+        
+        ## Manual url input tests in lists.tests.test_views.ShareListTest

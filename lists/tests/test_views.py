@@ -344,8 +344,73 @@ class ShareListTest(TestCase):
         owner = User.objects.create(email='john@example.com')
         user = User.objects.create(email='fred@example.com')
         list_ = List.objects.create(owner=owner)
+        self.client.force_login(owner)
         self.client.post(
             f'/lists/{list_.id}/share',
             data={'sharee': 'fred@example.com'}
         )
         self.assertIn(user, list_.shared_with.all())
+        
+    def test_get_from_anonymous_returns_403_code(self):
+        owner = User.objects.create_user(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        
+        response = self.client.get(f'/lists/{list_.id}/share')
+        self.assertEqual(response.status_code, 403)
+        
+    def test_post_from_anonymous_returns_403_code(self):
+        owner = User.objects.create_user(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        User.objects.create_user(email='sharee@example.com')
+        
+        response = self.client.post(
+            f'/lists/{list_.id}/share',
+            data={'sharee': 'sharee@example.com'}
+        )
+        self.assertEqual(response.status_code, 403)
+        
+    def test_post_from_anonymous_nothing_saved_to_db(self):
+        owner = User.objects.create_user(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        User.objects.create_user(email='sharee@example.com')
+        
+        response = self.client.post(
+            f'/lists/{list_.id}/share',
+            data={'sharee': 'sharee@example.com'}
+        )
+        self.assertEqual(list_.shared_with.count(), 0)
+        
+    def test_get_from_logged_in_not_owner_returns_403_code(self):
+        owner = User.objects.create_user(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        user = User.objects.create_user(email='user@example.com')
+        
+        self.client.force_login(user)
+        response = self.client.get(f'/lists/{list_.id}/share')
+        self.assertEqual(response.status_code, 403)
+        
+    def test_post_from_logged_in_not_owner_returns_403_code(self):
+        owner = User.objects.create_user(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        user = User.objects.create_user(email='user@example.com')
+        User.objects.create_user(email='sharee@example.com')
+        
+        self.client.force_login(user)
+        response = self.client.post(
+            f'/lists/{list_.id}/share',
+            data={'sharee': 'sharee@example.com'}
+        )
+        self.assertEqual(response.status_code, 403)
+        
+    def test_post_from_logged_in_not_owner_nothing_saved_to_db(self):
+        owner = User.objects.create_user(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        user = User.objects.create_user(email='user@example.com')
+        User.objects.create_user(email='sharee@example.com')
+        
+        self.client.force_login(user)
+        self.client.post(
+            f'/lists/{list_.id}/share',
+            data={'sharee': 'sharee@example.com'}
+        )
+        self.assertEqual(list_.shared_with.count(), 0)

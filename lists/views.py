@@ -1,10 +1,10 @@
 from django.shortcuts import redirect, render
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from lists.forms import ExistingListItemForm, ItemForm, NewListForm
-from lists.models import Item, List
+from lists.models import List
 
 
 NOT_LOGGED_IN_ERROR = 'You must log-in to see this page.'
@@ -54,5 +54,7 @@ def my_lists(request, email):
     
 def share_list(request, list_id):
     list_ = List.objects.get(id=list_id)
+    if request.user != list_.owner:
+        raise PermissionDenied
     list_.shared_with.add(request.POST['sharee'])
     return redirect(list_)
