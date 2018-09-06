@@ -1,3 +1,4 @@
+from smtplib import SMTPException
 from django.contrib import auth, messages
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
@@ -12,16 +13,23 @@ def send_login_email(request):
         reverse('login') + '?token=' + str(token.uid)
     )
     message_body = f'Use this link to log in:\n\n{url}'
-    send_mail(
-        'Your login link for Superlists',
-        message_body,
-        'noreply@superlists',
-        [email]
-    )
-    messages.success(
-        request,
-        "Check your email, we've sent you a link you can use to log in."
-    )
+    try:
+        send_mail(
+            'Your login link for Superlists',
+            message_body,
+            'noreply@superlists',
+            [email]
+        )
+    except SMTPException:
+        messages.error(
+            request,
+            "Sorry, can't connect to email server. Please try again after few minutes."
+        )
+    else:
+        messages.success(
+            request,
+            "Check your email, we've sent you a link you can use to log in."
+        )
     return redirect('/')
     
     

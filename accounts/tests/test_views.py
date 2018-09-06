@@ -1,5 +1,6 @@
 from django.test import TestCase
 from unittest.mock import patch, call
+from smtplib import SMTPException
 import accounts.views
 from accounts.models import Token
 
@@ -24,11 +25,12 @@ class SendLoginEmailViewTest(TestCase):
         self.assertEqual(from_email, 'noreply@superlists')
         self.assertEqual(to_list, ['edith@example.com'])
 
-    def test_adds_success_message(self):
+    def test_if_success_adds_success_message_only(self):
         response = self.client.post('/accounts/send_login_email', data={
             'email': 'edith@example.com'
         }, follow=True)
         
+        self.assertEqual(len(response.context['messages']), 1)
         message = list(response.context['messages'])[0]
         self.assertEqual(
             message.message,
@@ -53,6 +55,28 @@ class SendLoginEmailViewTest(TestCase):
         expected_url = f'http://testserver/accounts/login?token={token.uid}'
         (subject, body, from_email, to_list), kwargs = mock_send_mail.call_args
         self.assertIn(expected_url, body)
+        
+    @patch('accounts.views.send_mail')
+    def test_catches_smtp_exception(self, mock_send_mail):
+        mock_send_mail.side_effect = SMTPException()
+        self.client.post('/accounts/send_login_email', data={
+            'email': 'edith@example.com'
+        })
+        
+    @patch('accounts.views.send_mail')
+    def test_if_smtp_exception_adds_error_message_only(self, mock_send_mail):
+        mock_send_mail.side_effect = SMTPException()
+        response = self.client.post('/accounts/send_login_email', data={
+            'email': 'edith@example.com'
+        }, follow=True)
+        
+        self.assertEqual(len(response.context['messages']), 1)
+        message = list(response.context['messages'])[0]
+        self.assertEqual(
+            message.message,
+            "Sorry, can't connect to email server. Please try again after few minutes."
+        )
+        self.assertEqual(message.tags, 'error')
     
 
 @patch('accounts.views.auth')    
