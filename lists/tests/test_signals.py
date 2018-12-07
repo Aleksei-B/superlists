@@ -1,8 +1,9 @@
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from lists.models import List
+from lists.signals import invalidate_list_cache
 
 
 class NotificationsTest(TestCase):
@@ -19,3 +20,25 @@ class NotificationsTest(TestCase):
         self.assertEqual(kwargs['sender'], owner)
         self.assertEqual(kwargs['recipient'], sharee)
         self.assertEqual(kwargs['action_object'], list_)
+
+
+@patch('lists.signals.cache')
+@patch('lists.signals.make_template_fragment_key')
+class InvalidateListCacheTest(TestCase):
+
+    def test_should_call_make_template_fragment_key_with_right_arguments(
+        self, mock_make_template_fragment_key, mock_cache
+    ):
+        instance = Mock()
+        invalidate_list_cache(instance=instance)
+        mock_make_template_fragment_key.assert_called_once_with(
+            'item_list', [instance.list.pk]
+        )
+
+    def test_should_call_cache_delete_with_correct_key(
+        self, mock_make_template_fragment_key, mock_cache
+    ):
+        instance = Mock()
+        mock_make_template_fragment_key.return_value = 'abcde'
+        invalidate_list_cache(instance)
+        mock_cache.delete.assert_called_once_with('abcde')

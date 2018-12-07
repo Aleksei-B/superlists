@@ -103,6 +103,14 @@ if sys.argv[1] == 'test' and not os.environ.get('CI'):
     DATABASES['default']['ENGINE'] = 'django.db.backends.sqlite3'
 
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
 
