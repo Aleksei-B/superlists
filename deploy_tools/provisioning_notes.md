@@ -7,6 +7,7 @@ Provisioning a new site
 * Python 3.6
 * virtualenv + pip
 * Git
+* memcached
 
 eg, on Ubuntu:
 
