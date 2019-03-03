@@ -3,7 +3,7 @@ from collections import defaultdict
 from tornado.websocket import WebSocketHandler
 
 
-class NotificationsHandler(WebSocketHandler):
+class NotifyHandler(WebSocketHandler):
 
     clients = defaultdict(set)
     
@@ -13,10 +13,10 @@ class NotificationsHandler(WebSocketHandler):
 
     def open(self, current_list):
         self.current_list = current_list
-        NotificationsHandler.clients[current_list].add(self)
+        NotifyHandler.clients[current_list].add(self)
         
     def on_close(self):
-        NotificationsHandler.clients[self.current_list].discard(self)
+        NotifyHandler.clients[self.current_list].discard(self)
         
     @classmethod
     def broadcast(cls, message, list_key):
