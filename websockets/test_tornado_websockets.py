@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import Mock, patch
-from collections import defaultdict
+import urllib.parse
 
-from websocket_notifications.tornado import NotifyHandler
+from tornado.testing import AsyncHTTPTestCase
+from websockets.tornado_websockets import NotifyHandler, make_app
 
 
 @patch.dict(NotifyHandler.clients)
@@ -57,3 +58,18 @@ class NotifyHandlerTest(unittest.TestCase):
         user4.write_message.assert_called_once_with(message)
         user.write_message.assert_not_called
         user2.write_message.assert_not_called
+        
+        
+class NotifyApiTest(AsyncHTTPTestCase):
+
+    def get_app(self):
+        return make_app()
+        
+    @patch('websockets.tornado_websockets.NotifyHandler.broadcast')
+    def test_post_should_call_broadcast_with_correct_args(
+        self, mock_broadcast
+    ):
+        post_data = {'message': 'update', 'list_id': '1234'}
+        body = urllib.parse.urlencode(post_data)
+        self.fetch('/wsapi', method='POST', body=body)
+        mock_broadcast.assert_called_once_with('update', '1234')
