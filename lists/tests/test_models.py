@@ -1,11 +1,12 @@
-from django.test import TestCase
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.core.exceptions import ValidationError
+
+from .base import IntegrationTest
 from lists.models import Item, List
 
 
-class ItemModelTest(TestCase):
+class ItemModelTest(IntegrationTest):
     
     def test_default_text(self):
         item = Item()
@@ -54,7 +55,7 @@ class ItemModelTest(TestCase):
         self.assertEqual(str(item), 'some text')
 
         
-class ListModelTest(TestCase):
+class ListModelTest(IntegrationTest):
 
     def test_get_absolute_url(self):
         list_ = List.objects.create()

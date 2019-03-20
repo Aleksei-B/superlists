@@ -1,9 +1,15 @@
 from unittest.mock import patch, Mock
+from urllib.parse import urlencode
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 User = get_user_model()
-from lists.models import List
+
+from lists.models import List, Item
 from lists.signals import invalidate_list_cache
+
+
+TORNADO_API_URL = 'http://127.0.0.1/wsapi'
 
 
 class NotificationsTest(TestCase):
@@ -42,3 +48,34 @@ class InvalidateListCacheTest(TestCase):
         mock_make_template_fragment_key.return_value = 'abcde'
         invalidate_list_cache(instance)
         mock_cache.delete.assert_called_once_with('abcde')
+
+
+@patch('lists.signals.urlopen')
+class WebsocketBroadcastTest(TestCase):
+
+    def test_should_POST_to_correct_url(self, mock_urlopen):
+        owner = User.objects.create(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        item = Item.objects.create(list=list_)
+
+        correct_url = TORNADO_API_URL
+        (request, ), _ = mock_urlopen.call_args
+        self.assertEqual(request.full_url, correct_url)
+        self.assertEqual(request.get_method(), 'POST')
+
+    def test_should_send_correct_data(self, mock_urlopen):
+        owner = User.objects.create(email='owner@example.com')
+        list_ = List.objects.create(owner=owner)
+        item = Item.objects.create(list=list_)
+        
+        correct_data = urlencode(
+            {'message': 'update', 'list_id': list_.id}
+        )
+        (request, ), _ = mock_urlopen.call_args
+        self.assertEqual(request.data, correct_data)
+        
+    def test_should_POST_only_if_list_have_an_owner(self, mock_urlopen):
+        list_ = List.objects.create(owner=None)
+        item = Item.objects.create(list=list_)
+        
+        mock_urlopen.assert_not_called()

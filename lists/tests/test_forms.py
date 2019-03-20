@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
-from django.test import TestCase
+
+from .base import IntegrationTest
 from lists.models import Item, List
 from lists.forms import (
     DUPLICATE_ITEM_ERROR,EMPTY_ITEM_ERROR,
@@ -9,7 +10,7 @@ from lists.forms import (
 from lists.models import Item, List
 
 
-class ItemFormTest(TestCase):
+class ItemFormTest(IntegrationTest):
 
     def test_form_item_input_has_placeholder_and_css_classes(self):
         form = ItemForm()
@@ -22,7 +23,7 @@ class ItemFormTest(TestCase):
         self.assertEqual(form.errors['text'], [EMPTY_ITEM_ERROR])
         
         
-class ExistingListItemFormTest(TestCase):
+class ExistingListItemFormTest(IntegrationTest):
 
     def test_form_renders_item_text_input(self):
         list_ = List.objects.create()

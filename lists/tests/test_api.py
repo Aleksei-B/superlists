@@ -1,11 +1,13 @@
 import json
+
 from django.core.urlresolvers import reverse
-from django.test import TestCase
+
+from .base import IntegrationTest
 from lists.models import List, Item
 from lists.forms import DUPLICATE_ITEM_ERROR, EMPTY_ITEM_ERROR
 
 
-class ListAPITest(TestCase):
+class ListAPITest(IntegrationTest):
     base_url = '/api/lists/{}/'
     
     def test_get_returns_json_200(self):
@@ -30,7 +32,7 @@ class ListAPITest(TestCase):
         )
         
         
-class ItemsAPITest(TestCase):
+class ItemsAPITest(IntegrationTest):
     base_url = reverse('item-list')
     
     def test_POSTing_a_new_item(self):

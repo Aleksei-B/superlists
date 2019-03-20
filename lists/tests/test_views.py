@@ -1,10 +1,12 @@
 import unittest
 from unittest.mock import patch, Mock
+
 from django.http import HttpRequest
-from django.test import TestCase
 from django.utils.html import escape
 from django.contrib.auth import get_user_model
 User = get_user_model()
+
+from .base import IntegrationTest
 from lists.forms import (
     DUPLICATE_ITEM_ERROR, EMPTY_ITEM_ERROR,
     ExistingListItemForm, ItemForm,
@@ -16,7 +18,7 @@ from lists.views import (
 )
 
 
-class HomePageTest(TestCase):
+class HomePageTest(IntegrationTest):
 
     def test_uses_home_template(self):
         response = self.client.get('/')
@@ -27,7 +29,7 @@ class HomePageTest(TestCase):
         self.assertIsInstance(response.context['form'], ItemForm)
     
 
-class ListViewTest(TestCase):
+class ListViewTest(IntegrationTest):
     
     def test_uses_list_template(self):
         list_ = List.objects.create()
@@ -253,7 +255,7 @@ class NewListViewUnitTest(unittest.TestCase):
         self.assertFalse(mock_form.save.called)
   
 
-class NewListViewIntegratedTest(TestCase):
+class NewListViewIntegratedTest(IntegrationTest):
     def test_can_save_a_POST_request(self):
         self.client.post('/lists/new', data={'text': 'A new list item'})
         self.assertEqual(Item.objects.count(), 1)
@@ -273,7 +275,7 @@ class NewListViewIntegratedTest(TestCase):
         self.assertEqual(list_.owner, user)
         
         
-class MyListsTest(TestCase):
+class MyListsTest(IntegrationTest):
 
     def test_my_lists_url_renders_my_lists_template(self):
         user = User.objects.create(email='a@b.com')
@@ -327,7 +329,7 @@ class MyListsTest(TestCase):
         self.assertEqual(message.tags, "error")
         
 
-class ShareListTest(TestCase):
+class ShareListTest(IntegrationTest):
 
     def test_post_redirects_to_lists_page(self):
         owner = User.objects.create(email='owner@example.com')

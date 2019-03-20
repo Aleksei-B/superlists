@@ -1,9 +1,13 @@
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.contrib.auth import get_user_model
 User = get_user_model()
+
 from notifications.signals import notify
 from lists.models import List, Item
 
@@ -21,3 +25,12 @@ def user_shares_list(instance, pk_set, action, **kwargs):
 def invalidate_list_cache(instance, **kwargs):
     key = make_template_fragment_key('item_list', [instance.list.pk])
     cache.delete(key)
+    
+   
+@receiver(post_save, sender=Item)
+def websocket_broadcast(instance, **kwargs):
+    if not instance.list.owner:
+        return
+    data = urlencode({'message': 'update', 'list_id': instance.list.id})
+    request = Request('http://127.0.0.1/wsapi', data=data)
+    urlopen(request)
